@@ -18,7 +18,14 @@ function App() {
           </ProtectedRoute>
         }
       />
-      <Route path="/tree/:id" element={<FamilyTree />} />
+      <Route
+        path="/family-tree/:treeId"
+        element={
+          <ProtectedRoute>
+            <FamilyTree />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }
