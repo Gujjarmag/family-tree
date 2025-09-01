@@ -5,6 +5,7 @@ import { PrismaClient } from "@prisma/client";
 import authRoutes from "./routes/authRoutes.js";
 import treeRoutes from "./routes/treeRoutes.js";
 import memberRoutes from "./routes/memberRoutes.js";
+import path from "path";
 
 dotenv.config();
 const app = express();
@@ -29,3 +30,5 @@ app.listen(PORT, () => {
 // Tree and Member APIs
 app.use("/api/trees", treeRoutes);
 app.use("/api/members", memberRoutes);
+
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));

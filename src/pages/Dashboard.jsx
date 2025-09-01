@@ -21,7 +21,12 @@ export default function Dashboard() {
       setTrees(data);
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || "Failed to load trees");
+      if (err.response?.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/");
+      } else {
+        setError(err.response?.data?.message || "Failed to load trees");
+      }
     } finally {
       setLoading(false);
     }
@@ -87,7 +92,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-lg shadow p-4">
           <h2 className="text-xl font-semibold mb-3">Your Family Trees</h2>
           {loading ? (
-            <p>Loading...</p>
+            <p className="text-center text-blue-600">Fetching your trees...</p>
           ) : trees.length === 0 ? (
             <p className="text-gray-600">
               No trees yet. Create your first one!

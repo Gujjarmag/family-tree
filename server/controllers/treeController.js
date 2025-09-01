@@ -40,3 +40,19 @@ export const getUserTrees = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// GET /api/trees/:id
+export const getTreeById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tree = await prisma.tree.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (!tree) return res.status(404).json({ message: "Tree not found" });
+    res.json(tree);
+  } catch (err) {
+    console.error("Error fetching tree:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
