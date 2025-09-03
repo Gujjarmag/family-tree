@@ -248,7 +248,7 @@ export default function FamilyTree() {
           xmlns="http://www.w3.org/1999/xhtml"
           style={{
             backgroundColor: "#ffffff",
-            border: "2px solid #3B82F6",
+            border: "1px solid #babdc4ff",
             borderRadius: "12px",
             padding: "10px",
             boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
@@ -306,7 +306,7 @@ export default function FamilyTree() {
             )} */}
             {prettyDob && (
               <div style={{ fontSize: "12px", color: "#6B7280" }}>
-                DOB: {prettyDob}
+                {prettyDob}
               </div>
             )}
           </div>
@@ -650,17 +650,7 @@ export default function FamilyTree() {
 
           <button
             type="submit"
-            style={{
-              width: "100%",
-              padding: "10px",
-              backgroundColor: "#F59E0B",
-              color: "white",
-              border: "none",
-              borderRadius: "5px",
-              cursor: "pointer",
-              fontWeight: "bold",
-              marginBottom: "10px",
-            }}
+            className="w-full p-2 bg-yellow-500 text-white rounded cursor-pointer font-bold mb-2"
           >
             Save Changes
           </button>
@@ -683,16 +673,7 @@ export default function FamilyTree() {
                 alert("Failed to delete member.");
               }
             }}
-            style={{
-              width: "100%",
-              padding: "10px",
-              backgroundColor: "#EF4444",
-              color: "white",
-              border: "none",
-              borderRadius: "5px",
-              cursor: "pointer",
-              fontWeight: "bold",
-            }}
+            className="w-full p-2 bg-red-500 text-white rounded cursor-pointer font-bold"
           >
             Delete Member
           </button>

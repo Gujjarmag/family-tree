@@ -174,10 +174,19 @@ export const updateMember = async (req, res) => {
     const { id } = req.params;
     const { name, dob, gender } = req.body;
 
+    // ✅ Convert dob into a valid Date or set null if empty
+    let parsedDob = null;
+    if (dob && dob.trim() !== "") {
+      parsedDob = new Date(dob);
+      if (isNaN(parsedDob)) {
+        return res.status(400).json({ message: "Invalid date format" });
+      }
+    }
+
     // Build data object
     const updatedData = {
       name,
-      dob: dob || null,
+      dob: parsedDob,
       gender,
     };
 
