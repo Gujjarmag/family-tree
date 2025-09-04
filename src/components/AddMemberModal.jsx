@@ -13,7 +13,7 @@ export default function AddMemberModal({
       isOpen={isOpen}
       onRequestClose={onRequestClose}
       contentLabel="Add Member"
-      className="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-300"
+      className="w-[400px] px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-300"
     >
       <h2 style={{ marginBottom: "15px", textAlign: "center" }}>
         Add {relationType.charAt(0).toUpperCase() + relationType.slice(1)}

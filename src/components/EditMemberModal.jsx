@@ -14,7 +14,7 @@ export default function EditMemberModal({
       isOpen={isOpen}
       onRequestClose={onRequestClose}
       contentLabel="Edit Member"
-      className="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-300"
+      className="w-[400px] px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-300"
     >
       <h2 style={{ marginBottom: "15px", textAlign: "center" }}>Edit Member</h2>
       <form onSubmit={handleEditSave}>
