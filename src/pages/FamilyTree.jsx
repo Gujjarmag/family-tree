@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, data } from "react-router-dom";
 import API from "../lib/api";
 import Tree from "react-d3-tree";
 import Modal from "react-modal";
@@ -9,12 +9,14 @@ import { useTree } from "../context/TreeContext";
 import { useTreeName } from "../hooks/useTreeName";
 import { useMembers } from "../hooks/useMembers";
 import { useTreeData } from "../hooks/useTreeData";
+// import { useState } from "react";
 
 Modal.setAppElement("#root"); // accessibility
 
 export default function FamilyTree() {
   const { treeId } = useParams();
   const navigate = useNavigate();
+  const [formError, setFormError] = useState("");
 
   const {
     members,
@@ -32,10 +34,6 @@ export default function FamilyTree() {
 
   // data + ui state
 
-  // remove these lines:
-  // const [loading, setLoading] = useState(false);
-  // const [error, setError] = useState("");
-
   // add-modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [relationType, setRelationType] = useState(""); // "child" | "parent" | "sibling"
@@ -49,39 +47,6 @@ export default function FamilyTree() {
     gender: "",
     dob: "",
   });
-
-  // remove these lines:
-  // const [treeName, setTreeName] = useState("");
-  // useEffect(() => {
-  //   const fetchTree = async () => {
-  //     try {
-  //       const { data } = await API.get(`/trees/${treeId}`);
-  //       setTreeName(data.name);
-  //     } catch (err) {
-  //       console.error("Failed to fetch tree name:", err);
-  //     }
-  //   };
-  //   fetchTree();
-  // }, [treeId]);
-
-  // --- API: fetch members for this tree ---
-  // const fetchMembers = async () => {
-  //   try {
-  //     setLoading(true);
-  //     const { data } = await API.get(`/members/${treeId}`);
-  //     setMembers(data);
-  //   } catch (err) {
-  //     console.error(err);
-  //     setError(err.response?.data?.message || "Failed to load members");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   fetchMembers();
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [treeId]);
 
   // --- Build tree from flat list ---
   const buildTree = useCallback(() => {
@@ -134,10 +99,11 @@ export default function FamilyTree() {
     if (!ok) return;
     try {
       await API.delete(`/members/${memberId}`);
-      await fetchMembers(); // refresh tree
+      const response = await API.delete(`/members/${memberId}`);
+      setMembers(data); // update state directly
     } catch (error) {
       console.error("Delete failed:", error);
-      alert("Failed to delete member.");
+      setFormError("Failed to delete member.");
     }
   };
 
@@ -168,32 +134,29 @@ export default function FamilyTree() {
         parentIdToSend !== null ? String(parentIdToSend) : ""
       );
       data.append("relationType", relationType || "");
-      data.append("id", selectedNode?.id ? String(selectedNode.id) : ""); // used by backend for sibling/root logic
+      data.append("id", selectedNode?.id ? String(selectedNode.id) : "");
       if (formData.photo) data.append("photo", formData.photo);
-
-      // debug: inspect what will be sent
-      console.log("📤 Sending FormData:", [...data.entries()]);
 
       // send multipart/form-data
       const response = await API.post("/members", data, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      console.log("✅ add-member response:", response.status, response.data);
-
       if (response.status === 201 || response.status === 200) {
-        await fetchMembers();
+        // Refresh members
+        const { data: membersData } = await API.get(`/members/${treeId}`);
+        setMembers(membersData);
         setIsModalOpen(false);
         setFormData({ name: "", gender: "", dob: "", photo: null });
-        setError("");
+        setFormError("");
         return;
       }
 
-      setError(response.data?.message || "Failed to add member.");
+      setFormError(response.data?.message || "Failed to add member.");
       console.error("❌ API returned non-201:", response);
     } catch (err) {
       console.error("❌ API call failed:", err);
-      setError(
+      setFormError(
         err.response?.data?.message || err.message || "Failed to add member."
       );
     }
@@ -211,9 +174,7 @@ export default function FamilyTree() {
       formDataToSend.append("gender", editFormData.gender || "");
       formDataToSend.append("dob", editFormData.dob || "");
 
-      // ✅ Always append the photo, even if unchanged
       if (editFormData.photo instanceof File) {
-        console.log("📸 Adding new photo:", editFormData.photo);
         formDataToSend.append("photo", editFormData.photo);
       }
 
@@ -226,26 +187,20 @@ export default function FamilyTree() {
       );
 
       if (response.status === 200) {
-        // ✅ Update UI immediately
-        setMembers((prevMembers) =>
-          prevMembers.map((m) =>
-            m.id === response.data.member.id ? response.data.member : m
-          )
-        );
+        // Refresh members
+        const { data: membersData } = await API.get(`/members/${treeId}`);
+        setMembers(membersData);
 
         setIsEditModalOpen(false);
         setEditFormData({ name: "", gender: "", dob: "", photo: null });
-
-        console.log("✅ Member updated successfully");
-
-        // ✅ Refetch all members to get the latest photo URL
-        await fetchMembers();
+        setFormError("");
+        return;
       } else {
-        setError(response.data?.message || "Failed to update member.");
+        setFormError(response.data?.message || "Failed to update member.");
       }
     } catch (err) {
       console.error("❌ Error updating member:", err);
-      setError(
+      setFormError(
         err.response?.data?.message || err.message || "Failed to update member."
       );
     }
