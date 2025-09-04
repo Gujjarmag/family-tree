@@ -3,6 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import API from "../lib/api";
 import Tree from "react-d3-tree";
 import Modal from "react-modal";
+import AddMemberModal from "../components/AddMemberModal";
+import EditMemberModal from "../components/EditMemberModal";
+import { useTree } from "../context/TreeContext";
+import { useTreeName } from "../hooks/useTreeName";
+import { useMembers } from "../hooks/useMembers";
+import { useTreeData } from "../hooks/useTreeData";
 
 Modal.setAppElement("#root"); // accessibility
 
@@ -10,13 +16,25 @@ export default function FamilyTree() {
   const { treeId } = useParams();
   const navigate = useNavigate();
 
-  const [isEditingMode, setIsEditingMode] = useState(false);
+  const {
+    members,
+    setMembers,
+    treeData,
+    setTreeData,
+    isEditingMode,
+    setIsEditingMode,
+  } = useTree();
+
+  // Use custom hooks
+  const { loading, error } = useMembers(treeId, setMembers);
+  useTreeData(members, setTreeData);
+  const treeName = useTreeName(treeId);
 
   // data + ui state
-  const [members, setMembers] = useState([]);
-  const [treeData, setTreeData] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+
+  // remove these lines:
+  // const [loading, setLoading] = useState(false);
+  // const [error, setError] = useState("");
 
   // add-modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,37 +50,38 @@ export default function FamilyTree() {
     dob: "",
   });
 
-  const [treeName, setTreeName] = useState("");
-  useEffect(() => {
-    const fetchTree = async () => {
-      try {
-        const { data } = await API.get(`/trees/${treeId}`);
-        setTreeName(data.name);
-      } catch (err) {
-        console.error("Failed to fetch tree name:", err);
-      }
-    };
-    fetchTree();
-  }, [treeId]);
+  // remove these lines:
+  // const [treeName, setTreeName] = useState("");
+  // useEffect(() => {
+  //   const fetchTree = async () => {
+  //     try {
+  //       const { data } = await API.get(`/trees/${treeId}`);
+  //       setTreeName(data.name);
+  //     } catch (err) {
+  //       console.error("Failed to fetch tree name:", err);
+  //     }
+  //   };
+  //   fetchTree();
+  // }, [treeId]);
 
   // --- API: fetch members for this tree ---
-  const fetchMembers = async () => {
-    try {
-      setLoading(true);
-      const { data } = await API.get(`/members/${treeId}`);
-      setMembers(data);
-    } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.message || "Failed to load members");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const fetchMembers = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const { data } = await API.get(`/members/${treeId}`);
+  //     setMembers(data);
+  //   } catch (err) {
+  //     console.error(err);
+  //     setError(err.response?.data?.message || "Failed to load members");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
-  useEffect(() => {
-    fetchMembers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [treeId]);
+  // useEffect(() => {
+  //   fetchMembers();
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [treeId]);
 
   // --- Build tree from flat list ---
   const buildTree = useCallback(() => {
@@ -246,20 +265,21 @@ export default function FamilyTree() {
       >
         <div
           xmlns="http://www.w3.org/1999/xhtml"
-          style={{
-            backgroundColor: "#ffffff",
-            border: "1px solid #babdc4ff",
-            borderRadius: "12px",
-            padding: "10px",
-            boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
-            textAlign: "center",
-            position: "relative",
-            fontFamily: "sans-serif",
-            fontSize: "14px",
-            // New styles
-            alignItems: "center",
-            display: "flex",
-          }}
+          // style={{
+          //   backgroundColor: "#ffffff",
+          //   border: "1px solid #babdc4ff",
+          //   borderRadius: "12px",
+          //   padding: "10px",
+          //   boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
+          //   textAlign: "center",
+          //   position: "relative",
+          //   fontFamily: "sans-serif",
+          //   fontSize: "14px",
+          //   // New styles
+          //   alignItems: "center",
+          //   display: "flex",
+          // }}
+          className="bg-white border border-gray-300 rounded-xl p-2 shadow-md text-center relative font-sans text-sm flex items-center"
         >
           {/* === Profile Photo or Placeholder === */}
           <div style={{ marginBottom: "6px" }}>
@@ -267,36 +287,16 @@ export default function FamilyTree() {
               <img
                 src={nodeDatum.photoUrl}
                 alt={nodeDatum.name}
-                style={{
-                  width: "50px",
-                  height: "50px",
-                  borderRadius: "50%",
-                  objectFit: "cover",
-                  boxShadow: "0px 2px 6px rgba(0,0,0,0.2)",
-                  marginRight: "10px",
-                }}
+                className="w-12 h-12 rounded-full object-cover shadow mr-2"
               />
             ) : (
-              <div
-                style={{
-                  width: "50px",
-                  height: "50px",
-                  borderRadius: "50%",
-                  background: "#D1D5DB",
-                  // display: "inline-block",
-                  boxShadow: "0px 2px 6px rgba(0,0,0,0.2)",
-                  //
-                  marginRight: "10px",
-                }}
-              />
+              <div className="w-12 h-12 rounded-full bg-gray-300 shadow mr-2" />
             )}
           </div>
 
           {/* Name */}
-          <div style={{ textAlign: "left" }}>
-            <div
-              style={{ fontWeight: "600", fontSize: "16px", color: "#1F2937" }}
-            >
+          <div className="text-left">
+            <div className="font-semibold text-base text-gray-800">
               {nodeDatum.name}
             </div>
             {/* {nodeDatum.gender && (
@@ -305,9 +305,7 @@ export default function FamilyTree() {
               </div>
             )} */}
             {prettyDob && (
-              <div style={{ fontSize: "12px", color: "#6B7280" }}>
-                {prettyDob}
-              </div>
+              <div className="text-xs text-gray-500">{prettyDob}</div>
             )}
           </div>
 
@@ -320,18 +318,7 @@ export default function FamilyTree() {
                   e.stopPropagation();
                   handleAddClick(e, nodeDatum, "child");
                 }}
-                style={{
-                  position: "absolute",
-                  bottom: "-12px",
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  background: "transparent",
-                  border: "none",
-                  color: "black",
-                  fontSize: "20px",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                }}
+                className="absolute bottom-[-12px] left-1/2 -translate-x-1/2 bg-transparent border-none text-black text-xl font-bold cursor-pointer"
                 title="Add Child"
               >
                 +
@@ -343,18 +330,7 @@ export default function FamilyTree() {
                   e.stopPropagation();
                   handleAddClick(e, nodeDatum, "sibling");
                 }}
-                style={{
-                  position: "absolute",
-                  right: "-0.5px",
-                  top: "50%",
-                  transform: "translateX(-50%)",
-                  background: "transparent",
-                  border: "none",
-                  color: "black",
-                  fontSize: "20px",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                }}
+                className="absolute right-0 top-1/2 -translate-x-1/2 bg-transparent border-none text-black text-xl font-bold cursor-pointer"
                 title="Add Sibling"
               >
                 +
@@ -364,19 +340,7 @@ export default function FamilyTree() {
               {!nodeDatum.parentId && (
                 <button
                   onClick={(e) => handleAddClick(e, nodeDatum, "parent")}
-                  style={{
-                    position: "absolute",
-                    top: "-8px", // Push above the node
-                    left: "50%", // Center horizontally
-                    transform: "translateX(-50%)",
-                    backgroundColor: "transparent",
-                    color: "black",
-                    fontSize: "20px",
-                    fontWeight: "bold",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                  }}
+                  className="absolute top-[-8px] left-1/2 -translate-x-1/2 bg-transparent text-black text-xl font-bold border-none cursor-pointer p-0"
                   title="Add Parent"
                 >
                   +
@@ -397,20 +361,7 @@ export default function FamilyTree() {
                   });
                   setIsEditModalOpen(true);
                 }}
-                style={{
-                  position: "absolute",
-                  top: "4px",
-                  right: "4px",
-                  backgroundColor: "#F59E0B",
-                  color: "white",
-                  borderRadius: "6px",
-                  padding: "2px 6px",
-                  fontSize: "12px",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                  border: "none",
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.2)",
-                }}
+                className="absolute top-1 right-1 bg-yellow-500 text-white rounded px-1 py-0.5 text-xs font-bold cursor-pointer border-none shadow"
                 title="Edit Member"
               >
                 ✎
@@ -447,7 +398,8 @@ export default function FamilyTree() {
                 type="checkbox"
                 checked={isEditingMode}
                 onChange={(e) => setIsEditingMode(e.target.checked)}
-                style={{ marginRight: "6px" }}
+                // style={{ marginRight: "6px" }}
+                className="mr-2 accent-blue-600"
               />
               Editing Mode
             </label>
@@ -488,197 +440,29 @@ export default function FamilyTree() {
       </div>
 
       {/* Add Member Modal */}
-      <Modal
+      <AddMemberModal
         isOpen={isModalOpen}
         onRequestClose={() => setIsModalOpen(false)}
-        contentLabel="Add Member"
-        style={{
-          content: {
-            width: "400px",
-            margin: "auto",
-            borderRadius: "10px",
-            padding: "20px",
-            boxShadow: "0 4px 10px rgba(0, 0, 0, 0.3)",
-          },
-        }}
-      >
-        <h2 style={{ marginBottom: "15px", textAlign: "center" }}>
-          Add {relationType.charAt(0).toUpperCase() + relationType.slice(1)}
-        </h2>
-
-        <form onSubmit={handleAddMember}>
-          <div style={{ marginBottom: "10px" }}>
-            <label>Name *</label>
-            <input
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              style={{ width: "100%", padding: "8px", marginTop: "4px" }}
-            />
-          </div>
-
-          <div style={{ marginBottom: "10px" }}>
-            <label>Gender</label>
-            <select
-              value={formData.gender}
-              onChange={(e) =>
-                setFormData({ ...formData, gender: e.target.value })
-              }
-              style={{ width: "100%", padding: "8px", marginTop: "4px" }}
-            >
-              <option value="">Select Gender</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-            </select>
-          </div>
-
-          <div style={{ marginBottom: "10px" }}>
-            <label>Date of Birth</label>
-            <input
-              type="date"
-              value={formData.dob}
-              onChange={(e) =>
-                setFormData({ ...formData, dob: e.target.value })
-              }
-              style={{ width: "100%", padding: "8px", marginTop: "4px" }}
-            />
-          </div>
-
-          <div style={{ marginBottom: "10px" }}>
-            {/* New: Upload photo */}
-            <input
-              type="file"
-              name="photo"
-              accept="image/*"
-              onChange={(e) =>
-                setFormData({ ...formData, photo: e.target.files[0] })
-              }
-            />
-          </div>
-
-          <button
-            type="submit"
-            style={{
-              width: "100%",
-              padding: "10px",
-              backgroundColor: "#3B82F6",
-              color: "white",
-              border: "none",
-              borderRadius: "5px",
-              cursor: "pointer",
-              fontWeight: "bold",
-            }}
-          >
-            Add Member
-          </button>
-        </form>
-      </Modal>
+        relationType={relationType}
+        formData={formData}
+        setFormData={setFormData}
+        handleAddMember={handleAddMember}
+      />
 
       {/* Edit Member Modal */}
-      <Modal
+      <EditMemberModal
         isOpen={isEditModalOpen}
         onRequestClose={() => setIsEditModalOpen(false)}
-        contentLabel="Edit Member"
-        style={{
-          content: {
-            width: "400px",
-            margin: "auto",
-            borderRadius: "10px",
-            padding: "20px",
-            boxShadow: "0 4px 10px rgba(0, 0, 0, 0.3)",
-          },
+        editFormData={editFormData}
+        setEditFormData={setEditFormData}
+        handleEditSave={handleEditSave}
+        handleDeleteMember={(memberId) => {
+          // You may want to pass the event as null or refactor handleDeleteMember to not require event
+          handleDeleteMember({ stopPropagation: () => {} }, memberId);
+          setIsEditModalOpen(false);
         }}
-      >
-        <h2 style={{ marginBottom: "15px", textAlign: "center" }}>
-          Edit Member
-        </h2>
-
-        <form onSubmit={handleEditSave}>
-          <div style={{ marginBottom: "10px" }}>
-            <label>Name *</label>
-            <input
-              type="text"
-              required
-              value={editFormData.name}
-              onChange={(e) =>
-                setEditFormData({ ...editFormData, name: e.target.value })
-              }
-              style={{ width: "100%", padding: "8px", marginTop: "4px" }}
-            />
-          </div>
-
-          <div style={{ marginBottom: "10px" }}>
-            <label>Gender</label>
-            <select
-              value={editFormData.gender}
-              onChange={(e) =>
-                setEditFormData({ ...editFormData, gender: e.target.value })
-              }
-              style={{ width: "100%", padding: "8px", marginTop: "4px" }}
-            >
-              <option value="">Select Gender</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-            </select>
-          </div>
-
-          <div style={{ marginBottom: "10px" }}>
-            <label>Date of Birth</label>
-            <input
-              type="date"
-              value={editFormData.dob}
-              onChange={(e) =>
-                setEditFormData({ ...editFormData, dob: e.target.value })
-              }
-              style={{ width: "100%", padding: "8px", marginTop: "4px" }}
-            />
-          </div>
-
-          <div style={{ marginBottom: "10px" }}>
-            <input
-              type="file"
-              name="photo"
-              accept="image/*"
-              onChange={(e) =>
-                setEditFormData({ ...editFormData, photo: e.target.files[0] })
-              }
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full p-2 bg-yellow-500 text-white rounded cursor-pointer font-bold mb-2"
-          >
-            Save Changes
-          </button>
-
-          {/* Delete Button inside Edit Modal */}
-          <button
-            type="button"
-            onClick={async () => {
-              const ok = window.confirm(
-                "Are you sure you want to delete this member and all its children?"
-              );
-              if (!ok) return;
-
-              try {
-                await API.delete(`/members/${selectedNode.id}`);
-                setIsEditModalOpen(false);
-                await fetchMembers();
-              } catch (error) {
-                console.error("Failed to delete member:", error);
-                alert("Failed to delete member.");
-              }
-            }}
-            className="w-full p-2 bg-red-500 text-white rounded cursor-pointer font-bold"
-          >
-            Delete Member
-          </button>
-        </form>
-      </Modal>
+        selectedNode={selectedNode}
+      />
     </div>
   );
 }
